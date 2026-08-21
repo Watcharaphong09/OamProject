@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import Sidebar from "@/components/admin/Sidebar";
 import StatCards from "@/components/admin/StatCards";
 import RegistrationTable from "@/components/admin/RegistrationTable";
@@ -100,8 +101,8 @@ export default function AdminDashboard() {
       dateTo,
       sortBy,
       sortOrder,
-      page: String(page),
-      pageSize: "20",
+      page: "1",
+      pageSize: "10",
     });
     const res = await fetch(`/api/admin/registrations?${params}`);
     if (res.ok) {
@@ -146,10 +147,7 @@ export default function AdminDashboard() {
   };
 
   // QR Code URL
-  const baseUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/register`
-      : "/register";
+  const baseUrl = "https://oam-project.vercel.app/";
 
   // Close sort dropdown on outside click
   useEffect(() => {
@@ -251,56 +249,18 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Controls */}
-          <div className="space-y-3" id="registrations">
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search */}
-              <SearchBar value={search} onChange={setSearch} />
-
-              {/* Sort dropdown */}
-              <div className="relative" ref={sortRef}>
-                <button
-                  onClick={() => setShowSortDropdown((p) => !p)}
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-white/10 bg-white/5 text-slate-300 text-sm hover:border-white/20 transition-all whitespace-nowrap"
-                >
-                  <ArrowUpDown size={14} />
-                  <span>{currentSortLabel}</span>
-                  <ChevronDown size={14} className="text-slate-500" />
-                </button>
-                {showSortDropdown && (
-                  <div className="absolute right-0 top-full mt-1 z-20 glass-card border border-white/10 rounded-xl overflow-hidden w-44 shadow-2xl">
-                    {SORT_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.value}
-                        onClick={() => handleSortPreset(opt.value)}
-                        className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
-                          opt.value === `${sortBy}_${sortOrder}`
-                            ? "bg-cyan-400/10 text-cyan-400"
-                            : "text-slate-300 hover:bg-white/5 hover:text-white"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+          {/* Recent Registrations Header */}
+          <div className="flex items-center justify-between mt-10 mb-4" id="registrations">
+            <div>
+              <h2 className="text-lg font-bold text-white">ผู้ลงทะเบียนล่าสุด</h2>
+              <p className="text-slate-500 text-sm">แสดง 10 รายการล่าสุด</p>
             </div>
-
-            {/* Filter Panel */}
-            <FilterPanel
-              grades={registrations?.grades || []}
-              selectedGrade={grade}
-              selectedActivity={activityId}
-              dateFrom={dateFrom}
-              dateTo={dateTo}
-              onGradeChange={setGrade}
-              onActivityChange={setActivityId}
-              onDateChange={(from, to) => {
-                setDateFrom(from);
-                setDateTo(to);
-              }}
-            />
+            <Link 
+              href="/admin/registrations"
+              className="text-cyan-400 text-sm hover:text-cyan-300 font-medium"
+            >
+              ดูทั้งหมด &rarr;
+            </Link>
           </div>
 
           {/* Table */}
@@ -310,7 +270,7 @@ export default function AdminDashboard() {
               total={registrations.total}
               page={registrations.page}
               pageSize={registrations.pageSize}
-              totalPages={registrations.totalPages}
+              totalPages={1}
               sortBy={sortBy}
               sortOrder={sortOrder}
               onSort={handleSort}
