@@ -70,7 +70,7 @@ export default function SuccessCard({ data }: Props) {
           <div className="flex items-center gap-3 text-slate-300">
             <IdCard size={18} className="text-cyan-400" />
             <div>
-              <p className="text-xs text-slate-500">รหัสนักเรียน</p>
+              <p className="text-xs text-slate-500">รหัสนักศึกษา</p>
               <p className="font-mono text-white">{data.student_id}</p>
             </div>
           </div>

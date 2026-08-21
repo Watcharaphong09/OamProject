@@ -11,7 +11,7 @@ import { useSearchParams } from "next/navigation";
 const formSchema = z.object({
   first_name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
   last_name: z.string().min(2, "นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
-  student_id: z.string().min(4, "รหัสนักเรียนไม่ถูกต้อง"),
+  student_id: z.string().length(7, "รหัสนักศึกษาต้องมี 7 หลักพอดี"),
   grade: z.string().min(1, "กรุณาเลือกระดับชั้น"),
   nickname: z.string().min(1, "กรุณากรอกชื่อเล่น"),
   activity_id: z.number({ required_error: "กรุณาเลือกกิจกรรม" }),
@@ -185,14 +185,14 @@ export default function RegistrationForm({ onSuccess }: Props) {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-300 ml-1">รหัสนักเรียน</label>
+            <label className="text-sm font-medium text-slate-300 ml-1">รหัสนักศึกษา</label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
                 <IdCard size={18} />
               </div>
               <input
                 {...register("student_id")}
-                placeholder="660000"
+                placeholder="6600001"
                 className={inputClass}
               />
             </div>

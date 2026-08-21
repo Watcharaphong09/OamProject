@@ -29,7 +29,7 @@ const columns = [
   { key: "id", label: "ลำดับ", sortable: false },
   { key: "first_name", label: "ชื่อ", sortable: true },
   { key: "last_name", label: "นามสกุล", sortable: true },
-  { key: "student_id", label: "รหัสนักเรียน", sortable: true },
+  { key: "student_id", label: "รหัสนักศึกษา", sortable: true },
   { key: "grade", label: "ระดับชั้น", sortable: true },
   { key: "activity", label: "กิจกรรม", sortable: true },
   { key: "nickname", label: "ชื่อเล่น", sortable: false },

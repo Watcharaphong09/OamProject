@@ -27,7 +27,7 @@ export default function RegistrationDetail({ registration, onClose }: Props) {
     },
     {
       icon: Hash,
-      label: "รหัสนักเรียน",
+      label: "รหัสนักศึกษา",
       value: registration.student_id,
       iconColor: "text-cyan-400",
       iconBg: "bg-cyan-500/10 border-cyan-500/20",
