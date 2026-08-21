@@ -108,25 +108,41 @@ export default function RegistrationForm({ onSuccess }: Props) {
         {/* Activity Selection */}
         <div className="space-y-1.5">
           <label className="text-sm font-medium text-slate-300 ml-1">กิจกรรมที่เข้าร่วม</label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-              <CalendarDays size={18} />
+          
+          {defaultActivityId ? (
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-cyan-400">
+                <CalendarDays size={18} />
+              </div>
+              <input
+                type="text"
+                readOnly
+                value={activities.find(a => a.id === Number(defaultActivityId))?.name || "กำลังโหลด..."}
+                className={`${inputClass} bg-cyan-500/10 border-cyan-500/30 text-cyan-100 cursor-not-allowed`}
+              />
+              <input type="hidden" {...register("activity_id", { valueAsNumber: true })} />
             </div>
-            <select
-              {...register("activity_id", { valueAsNumber: true })}
-              className={`${inputClass} appearance-none`}
-            >
-              <option value="" className="bg-[#0a1628]">-- เลือกกิจกรรม --</option>
-              {activities.map((act) => (
-                <option key={act.id} value={act.id} className="bg-[#0a1628]">
-                  {act.name}
-                </option>
-              ))}
-            </select>
-            {errors.activity_id && (
-              <p className="text-red-400 text-xs mt-1.5 ml-1">{errors.activity_id.message}</p>
-            )}
-          </div>
+          ) : (
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <CalendarDays size={18} />
+              </div>
+              <select
+                {...register("activity_id", { valueAsNumber: true })}
+                className={`${inputClass} appearance-none`}
+              >
+                <option value="" className="bg-[#0a1628]">-- เลือกกิจกรรม --</option>
+                {activities.map((act) => (
+                  <option key={act.id} value={act.id} className="bg-[#0a1628]">
+                    {act.name}
+                  </option>
+                ))}
+              </select>
+              {errors.activity_id && (
+                <p className="text-red-400 text-xs mt-1.5 ml-1">{errors.activity_id.message}</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Existing Fields */}
