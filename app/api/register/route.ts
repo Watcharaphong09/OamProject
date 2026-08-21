@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     const { first_name, last_name, student_id, grade, nickname } = parsed.data;
 
     // Check duplicate
-    const existing = getRegistrationByStudentId(student_id);
+    const existing = await getRegistrationByStudentId(student_id);
     if (existing) {
       return NextResponse.json(
         { error: "รหัสนักเรียนนี้ลงทะเบียนแล้ว" },
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     }
 
     const registered_at = getBangkokNow();
-    const registration = createRegistration({
+    const registration = await createRegistration({
       first_name,
       last_name,
       student_id,

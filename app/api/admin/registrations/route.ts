@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const pageSize = Math.min(100, Math.max(1, parseInt(searchParams.get("pageSize") || "50", 10)));
 
-  const result = getRegistrations({ search, grade, dateFrom, dateTo, sortBy, sortOrder, page, pageSize });
-  const grades = getDistinctGrades();
+  const result = await getRegistrations({ search, grade, dateFrom, dateTo, sortBy, sortOrder, page, pageSize });
+  const grades = await getDistinctGrades();
 
   return NextResponse.json({
     data: result.data,

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { username, password } = parsed.data;
-    const admin = getAdminByUsername(username);
+    const admin = await getAdminByUsername(username);
 
     if (!admin) {
       return NextResponse.json(
