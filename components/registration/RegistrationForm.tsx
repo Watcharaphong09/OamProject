@@ -6,6 +6,7 @@ import * as z from "zod";
 import { useState, useEffect } from "react";
 import { User, GraduationCap, IdCard, Tag, ArrowRight, Loader2, CalendarDays } from "lucide-react";
 import { GRADE_OPTIONS } from "@/lib/utils";
+import { useSearchParams } from "next/navigation";
 
 const formSchema = z.object({
   first_name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
@@ -23,26 +24,38 @@ interface Props {
 }
 
 export default function RegistrationForm({ onSuccess }: Props) {
+  const searchParams = useSearchParams();
+  const defaultActivityId = searchParams.get("activityId");
+
   const [error, setError] = useState<string | null>(null);
   const [activities, setActivities] = useState<{ id: number; name: string }[]>([]);
-
-  useEffect(() => {
-    fetch("/api/activities")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setActivities(data);
-      })
-      .catch(console.error);
-  }, []);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-    watch
+    watch,
+    setValue,
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
   });
+
+  useEffect(() => {
+    fetch("/api/activities")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setActivities(data);
+          if (defaultActivityId) {
+            const numId = parseInt(defaultActivityId, 10);
+            if (data.some(a => a.id === numId)) {
+              setValue("activity_id", numId);
+            }
+          }
+        }
+      })
+      .catch(console.error);
+  }, [defaultActivityId, setValue]);
 
   const onSubmit = async (data: FormValues) => {
     setError(null);

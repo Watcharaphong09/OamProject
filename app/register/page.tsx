@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { QrCode, Shield } from "lucide-react";
+import { useState, Suspense } from "react";
+import { QrCode, Shield, Loader2 } from "lucide-react";
 import RegistrationForm from "@/components/registration/RegistrationForm";
 import SuccessCard from "@/components/registration/SuccessCard";
 import { Registration } from "@/lib/db";
@@ -49,7 +49,9 @@ export default function RegisterPage() {
               className="glass-card rounded-2xl p-6 animate-fade-in-up delay-100"
               style={{ animationFillMode: "both" }}
             >
-              <RegistrationForm onSuccess={setRegistration} />
+              <Suspense fallback={<div className="h-[400px] flex items-center justify-center text-cyan-400"><Loader2 className="animate-spin" /></div>}>
+                <RegistrationForm onSuccess={setRegistration} />
+              </Suspense>
             </div>
 
             {/* Footer */}

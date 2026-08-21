@@ -49,7 +49,7 @@ export default function SuccessCard({ data }: Props) {
         </div>
 
         {/* Data Card */}
-        <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-left space-y-3 mb-6">
+        <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-left space-y-3 mb-8">
           <div className="flex items-center gap-3 text-slate-300 border-b border-white/5 pb-3">
             <CalendarDays size={18} className="text-cyan-400" />
             <div>
@@ -84,7 +84,14 @@ export default function SuccessCard({ data }: Props) {
           </div>
         </div>
 
-        <p className="text-xs text-slate-500">
+        <a
+          href="/"
+          className="flex items-center justify-center gap-2 text-slate-400 hover:text-white transition-colors"
+        >
+          กลับสู่หน้าหลัก
+        </a>
+
+        <p className="mt-6 text-xs text-slate-500">
           บันทึกข้อมูลเมื่อ {formatThaiDateTime(now)}
         </p>
       </div>
