@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getActivities, createActivity, deleteActivity } from "@/lib/db";
 import { verifyAuth } from "@/lib/auth";
 
@@ -35,6 +36,8 @@ export async function POST(req: NextRequest) {
     }
 
     const activity = await createActivity(body.name.trim());
+    revalidatePath("/");
+    revalidatePath("/register");
     return NextResponse.json(activity, { status: 201 });
   } catch (error) {
     console.error("Error creating activity:", error);
@@ -59,6 +62,8 @@ export async function DELETE(req: NextRequest) {
     }
 
     await deleteActivity(parseInt(id, 10));
+    revalidatePath("/");
+    revalidatePath("/register");
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error deleting activity:", error);

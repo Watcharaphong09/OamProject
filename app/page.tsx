@@ -3,6 +3,8 @@ import Link from "next/link";
 import { CalendarDays, ArrowRight, Activity, QrCode } from "lucide-react";
 import { formatThaiDateTime } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const activities = await getActivities();
   const activeActivities = activities.filter(a => a.is_active);
