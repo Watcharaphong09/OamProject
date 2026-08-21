@@ -200,7 +200,10 @@ export default function AdminDashboard() {
 
               {/* Notifications */}
               <div className="relative">
-                <button className="w-9 h-9 flex items-center justify-center rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all">
+                <button 
+                  onClick={() => alert("ไม่มีการแจ้งเตือนใหม่ในขณะนี้")}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-all"
+                >
                   <Bell size={16} />
                 </button>
                 {stats && stats.today > 0 && (

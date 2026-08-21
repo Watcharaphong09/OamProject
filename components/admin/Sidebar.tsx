@@ -18,8 +18,6 @@ import {
 const navItems = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/dashboard#registrations", icon: Users, label: "Registrations" },
-  { href: "/admin/dashboard#students", icon: GraduationCap, label: "Students" },
-  { href: "/admin/dashboard#settings", icon: Settings, label: "Settings" },
 ];
 
 interface Props {

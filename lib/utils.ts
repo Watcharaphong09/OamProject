@@ -75,12 +75,6 @@ export function getRelativeTime(dateStr: string): string {
  * Class/Grade options
  */
 export const GRADE_OPTIONS = [
-  "ม.1",
-  "ม.2",
-  "ม.3",
-  "ม.4",
-  "ม.5",
-  "ม.6",
   "ปวช.1",
   "ปวช.2",
   "ปวช.3",
