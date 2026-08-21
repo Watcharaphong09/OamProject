@@ -58,7 +58,7 @@ export default function ClassChart({ data }: Props) {
     <div className="glass-card rounded-2xl p-5 border border-white/5">
       <div className="flex items-center gap-2 mb-5">
         <GraduationCap size={17} className="text-blue-400" />
-        <h3 className="text-white font-semibold">Registration by Class</h3>
+        <h3 className="text-white font-semibold">Activity/Grade split</h3>
       </div>
 
       {data.length === 0 ? (

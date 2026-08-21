@@ -34,6 +34,7 @@ interface StatsData {
 interface ChartData {
   daily: { date: string; count: number }[];
   byGrade: { grade: string; count: number }[];
+  byActivity?: { activity_name: string; count: number }[];
 }
 
 interface RegistrationsData {
@@ -64,6 +65,7 @@ export default function AdminDashboard() {
   // Filters
   const [search, setSearch] = useState("");
   const [grade, setGrade] = useState("");
+  const [activityId, setActivityId] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [sortBy, setSortBy] = useState("registered_at");
@@ -93,6 +95,7 @@ export default function AdminDashboard() {
     const params = new URLSearchParams({
       search,
       grade,
+      activityId,
       dateFrom,
       dateTo,
       sortBy,
@@ -105,7 +108,7 @@ export default function AdminDashboard() {
       const data = await res.json();
       setRegistrations(data);
     }
-  }, [search, grade, dateFrom, dateTo, sortBy, sortOrder, page]);
+  }, [search, grade, activityId, dateFrom, dateTo, sortBy, sortOrder, page]);
 
   useEffect(() => {
     fetchStats();
@@ -118,7 +121,7 @@ export default function AdminDashboard() {
   // Reset page on filter change
   useEffect(() => {
     setPage(1);
-  }, [search, grade, dateFrom, dateTo, sortBy, sortOrder]);
+  }, [search, grade, activityId, dateFrom, dateTo, sortBy, sortOrder]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -172,7 +175,7 @@ export default function AdminDashboard() {
             <div className="lg:block hidden">
               <h1 className="text-xl font-bold text-white">Dashboard</h1>
               <p className="text-slate-500 text-xs mt-0.5">
-                ระบบลงทะเบียนนักเรียนผ่าน QR Code
+                ระบบลงทะเบียนกิจกรรมผ่าน QR Code
               </p>
             </div>
             {/* Mobile title spacer */}
@@ -233,7 +236,12 @@ export default function AdminDashboard() {
           {chartData ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
               <RegistrationChart data={chartData.daily} />
-              <ClassChart data={chartData.byGrade} />
+              <ClassChart 
+                data={chartData.byActivity 
+                  ? chartData.byActivity.map(a => ({ grade: a.activity_name, count: a.count }))
+                  : chartData.byGrade
+                } 
+              />
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -281,14 +289,16 @@ export default function AdminDashboard() {
 
             {/* Filter Panel */}
             <FilterPanel
-              grades={registrations?.grades ?? []}
+              grades={registrations?.grades || []}
               selectedGrade={grade}
+              selectedActivity={activityId}
               dateFrom={dateFrom}
               dateTo={dateTo}
               onGradeChange={setGrade}
-              onDateChange={(f, t) => {
-                setDateFrom(f);
-                setDateTo(t);
+              onActivityChange={setActivityId}
+              onDateChange={(from, to) => {
+                setDateFrom(from);
+                setDateTo(to);
               }}
             />
           </div>

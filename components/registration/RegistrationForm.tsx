@@ -1,70 +1,51 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import {
-  User,
-  Hash,
-  GraduationCap,
-  Smile,
-  Loader2,
-  AlertCircle,
-  ChevronDown,
-} from "lucide-react";
+import * as z from "zod";
+import { useState, useEffect } from "react";
+import { User, GraduationCap, IdCard, Tag, ArrowRight, Loader2, CalendarDays } from "lucide-react";
 import { GRADE_OPTIONS } from "@/lib/utils";
-import { Registration } from "@/lib/db";
 
-const schema = z.object({
-  first_name: z
-    .string()
-    .min(1, "กรุณากรอกชื่อ")
-    .max(100, "ชื่อยาวเกินไป")
-    .trim(),
-  last_name: z
-    .string()
-    .min(1, "กรุณากรอกนามสกุล")
-    .max(100, "นามสกุลยาวเกินไป")
-    .trim(),
-  student_id: z
-    .string()
-    .min(1, "กรุณากรอกรหัสนักเรียน")
-    .regex(
-      /^[A-Za-z0-9]{4,15}$/,
-      "รหัสนักเรียนต้องเป็นตัวอักษรหรือตัวเลข 4-15 ตัวอักษร"
-    )
-    .trim(),
+const formSchema = z.object({
+  first_name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
+  last_name: z.string().min(2, "นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
+  student_id: z.string().min(4, "รหัสนักเรียนไม่ถูกต้อง"),
   grade: z.string().min(1, "กรุณาเลือกระดับชั้น"),
-  nickname: z
-    .string()
-    .min(1, "กรุณากรอกชื่อเล่น")
-    .max(50, "ชื่อเล่นยาวเกินไป")
-    .trim(),
+  nickname: z.string().min(1, "กรุณากรอกชื่อเล่น"),
+  activity_id: z.number({ required_error: "กรุณาเลือกกิจกรรม" }),
 });
 
-type FormData = z.infer<typeof schema>;
+type FormValues = z.infer<typeof formSchema>;
 
 interface Props {
-  onSuccess: (registration: Registration) => void;
+  onSuccess: (data: FormValues & { activity_name?: string }) => void;
 }
 
 export default function RegistrationForm({ onSuccess }: Props) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [serverError, setServerError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [activities, setActivities] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/activities")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setActivities(data);
+      })
+      .catch(console.error);
+  }, []);
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+    formState: { errors, isSubmitting },
+    watch
+  } = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
   });
 
-  const onSubmit = async (data: FormData) => {
-    setIsLoading(true);
-    setServerError(null);
-
+  const onSubmit = async (data: FormValues) => {
+    setError(null);
     try {
       const res = await fetch("/api/register", {
         method: "POST",
@@ -72,196 +53,186 @@ export default function RegistrationForm({ onSuccess }: Props) {
         body: JSON.stringify(data),
       });
 
-      const json = await res.json();
+      const result = await res.json();
 
       if (!res.ok) {
-        setServerError(json.error || "เกิดข้อผิดพลาด กรุณาลองใหม่");
+        setError(result.error || "เกิดข้อผิดพลาด กรุณาลองใหม่");
         return;
       }
 
-      onSuccess(json.data);
-    } catch {
-      setServerError("ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่");
-    } finally {
-      setIsLoading(false);
+      const selectedActivityName = activities.find(a => a.id === data.activity_id)?.name;
+      onSuccess({ ...data, activity_name: selectedActivityName });
+    } catch (err) {
+      setError("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้");
     }
   };
 
-  const inputClass = (hasError: boolean) =>
-    `w-full bg-white/5 border ${
-      hasError ? "border-red-500/70" : "border-white/10"
-    } rounded-xl px-4 py-3.5 pl-11 text-white placeholder-white/30 transition-all duration-200 focus:outline-none focus:border-cyan-400/60 focus:bg-white/8 focus:shadow-[0_0_0_3px_rgba(34,211,238,0.1),0_0_15px_rgba(34,211,238,0.1)] text-base`;
+  const inputClass =
+    "w-full bg-white/5 border border-white/10 rounded-xl pl-11 pr-4 py-3 text-white placeholder:text-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all input-focus";
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
-      {/* First Name */}
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1.5">
-          ชื่อ <span className="text-cyan-400">*</span>
-        </label>
-        <div className="relative">
-          <User
-            size={17}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400/70"
-          />
-          <input
-            {...register("first_name")}
-            type="text"
-            placeholder="กรอกชื่อ"
-            className={inputClass(!!errors.first_name)}
-            disabled={isLoading}
-          />
-        </div>
-        {errors.first_name && (
-          <p className="mt-1.5 text-sm text-red-400 flex items-center gap-1">
-            <AlertCircle size={13} />
-            {errors.first_name.message}
-          </p>
-        )}
+    <div className="glass-card rounded-3xl p-6 md:p-8 relative overflow-hidden animate-fade-in-up border border-white/10 shadow-2xl">
+      {/* Decorative blobs */}
+      <div className="absolute top-[-50px] right-[-50px] w-32 h-32 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-[-50px] left-[-50px] w-32 h-32 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="text-center mb-8 relative z-10">
+        <h2 className="text-2xl font-bold text-white mb-2 text-glow-cyan">
+          ลงทะเบียนเข้าร่วมกิจกรรม
+        </h2>
+        <p className="text-slate-400 text-sm">
+          กรุณากรอกข้อมูลให้ครบถ้วนเพื่อยืนยันการเข้าร่วม
+        </p>
       </div>
 
-      {/* Last Name */}
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1.5">
-          นามสกุล <span className="text-cyan-400">*</span>
-        </label>
-        <div className="relative">
-          <User
-            size={17}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400/70"
-          />
-          <input
-            {...register("last_name")}
-            type="text"
-            placeholder="กรอกนามสกุล"
-            className={inputClass(!!errors.last_name)}
-            disabled={isLoading}
-          />
-        </div>
-        {errors.last_name && (
-          <p className="mt-1.5 text-sm text-red-400 flex items-center gap-1">
-            <AlertCircle size={13} />
-            {errors.last_name.message}
-          </p>
-        )}
-      </div>
-
-      {/* Student ID */}
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1.5">
-          รหัสนักเรียน <span className="text-cyan-400">*</span>
-        </label>
-        <div className="relative">
-          <Hash
-            size={17}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400/70"
-          />
-          <input
-            {...register("student_id")}
-            type="text"
-            placeholder="รหัสนักเรียน (4-15 ตัวอักษร)"
-            className={inputClass(!!errors.student_id)}
-            disabled={isLoading}
-            autoCapitalize="characters"
-          />
-        </div>
-        {errors.student_id && (
-          <p className="mt-1.5 text-sm text-red-400 flex items-center gap-1">
-            <AlertCircle size={13} />
-            {errors.student_id.message}
-          </p>
-        )}
-      </div>
-
-      {/* Grade */}
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1.5">
-          ระดับชั้น <span className="text-cyan-400">*</span>
-        </label>
-        <div className="relative">
-          <GraduationCap
-            size={17}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400/70 pointer-events-none"
-          />
-          <select
-            {...register("grade")}
-            className={`${inputClass(!!errors.grade)} appearance-none cursor-pointer pr-10`}
-            disabled={isLoading}
-          >
-            <option value="" className="bg-slate-900">
-              เลือกระดับชั้น
-            </option>
-            {GRADE_OPTIONS.map((g) => (
-              <option key={g} value={g} className="bg-slate-900">
-                {g}
-              </option>
-            ))}
-          </select>
-          <ChevronDown
-            size={17}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/40 pointer-events-none"
-          />
-        </div>
-        {errors.grade && (
-          <p className="mt-1.5 text-sm text-red-400 flex items-center gap-1">
-            <AlertCircle size={13} />
-            {errors.grade.message}
-          </p>
-        )}
-      </div>
-
-      {/* Nickname */}
-      <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1.5">
-          ชื่อเล่น <span className="text-cyan-400">*</span>
-        </label>
-        <div className="relative">
-          <Smile
-            size={17}
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-cyan-400/70"
-          />
-          <input
-            {...register("nickname")}
-            type="text"
-            placeholder="กรอกชื่อเล่น"
-            className={inputClass(!!errors.nickname)}
-            disabled={isLoading}
-          />
-        </div>
-        {errors.nickname && (
-          <p className="mt-1.5 text-sm text-red-400 flex items-center gap-1">
-            <AlertCircle size={13} />
-            {errors.nickname.message}
-          </p>
-        )}
-      </div>
-
-      {/* Server Error */}
-      {serverError && (
-        <div className="flex items-center gap-2.5 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3.5">
-          <AlertCircle size={18} className="text-red-400 shrink-0" />
-          <p className="text-sm text-red-300">{serverError}</p>
+      {error && (
+        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center font-medium animate-fade-in-up">
+          {error}
         </div>
       )}
 
-      {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="w-full btn-primary relative z-10 text-white font-semibold py-4 px-6 rounded-xl text-base mt-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2.5"
-      >
-        {isLoading ? (
-          <>
-            <Loader2 size={20} className="animate-spin" />
-            <span>กำลังลงทะเบียน...</span>
-          </>
-        ) : (
-          <>
-            <GraduationCap size={20} />
-            <span>ลงทะเบียน</span>
-          </>
-        )}
-      </button>
-    </form>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 relative z-10">
+        {/* Activity Selection */}
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-slate-300 ml-1">กิจกรรมที่เข้าร่วม</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+              <CalendarDays size={18} />
+            </div>
+            <select
+              {...register("activity_id", { valueAsNumber: true })}
+              className={`${inputClass} appearance-none`}
+            >
+              <option value="" className="bg-[#0a1628]">-- เลือกกิจกรรม --</option>
+              {activities.map((act) => (
+                <option key={act.id} value={act.id} className="bg-[#0a1628]">
+                  {act.name}
+                </option>
+              ))}
+            </select>
+            {errors.activity_id && (
+              <p className="text-red-400 text-xs mt-1.5 ml-1">{errors.activity_id.message}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Existing Fields */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-300 ml-1">ชื่อ</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <User size={18} />
+              </div>
+              <input
+                {...register("first_name")}
+                placeholder="สมชาย"
+                className={inputClass}
+              />
+            </div>
+            {errors.first_name && (
+              <p className="text-red-400 text-xs ml-1">{errors.first_name.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-300 ml-1">นามสกุล</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <User size={18} />
+              </div>
+              <input
+                {...register("last_name")}
+                placeholder="ใจดี"
+                className={inputClass}
+              />
+            </div>
+            {errors.last_name && (
+              <p className="text-red-400 text-xs ml-1">{errors.last_name.message}</p>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-slate-300 ml-1">ชื่อเล่น</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+              <Tag size={18} />
+            </div>
+            <input
+              {...register("nickname")}
+              placeholder="ชาย"
+              className={inputClass}
+            />
+          </div>
+          {errors.nickname && (
+            <p className="text-red-400 text-xs ml-1">{errors.nickname.message}</p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-300 ml-1">รหัสนักเรียน</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <IdCard size={18} />
+              </div>
+              <input
+                {...register("student_id")}
+                placeholder="660000"
+                className={inputClass}
+              />
+            </div>
+            {errors.student_id && (
+              <p className="text-red-400 text-xs ml-1">{errors.student_id.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-slate-300 ml-1">ระดับชั้น</label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                <GraduationCap size={18} />
+              </div>
+              <select
+                {...register("grade")}
+                className={`${inputClass} appearance-none`}
+              >
+                <option value="" className="bg-[#0a1628]">เลือก</option>
+                {GRADE_OPTIONS.map((g) => (
+                  <option key={g} value={g} className="bg-[#0a1628]">
+                    {g}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {errors.grade && (
+              <p className="text-red-400 text-xs ml-1">{errors.grade.message}</p>
+            )}
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="btn-primary w-full mt-8 py-3.5 rounded-xl text-white font-medium flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 size={20} className="animate-spin" />
+              กำลังบันทึกข้อมูล...
+            </>
+          ) : (
+            <>
+              ยืนยันการลงทะเบียน
+              <ArrowRight
+                size={20}
+                className="group-hover:translate-x-1 transition-transform"
+              />
+            </>
+          )}
+        </button>
+      </form>
+    </div>
   );
 }

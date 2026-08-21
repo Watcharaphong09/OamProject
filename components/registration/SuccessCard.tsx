@@ -1,126 +1,93 @@
 "use client";
 
-import { CheckCircle2, User, Hash, GraduationCap, Calendar, Clock, Home } from "lucide-react";
-import { Registration } from "@/lib/db";
-import { formatThaiDate, formatThaiTime } from "@/lib/utils";
-import Link from "next/link";
+import { CheckCircle2, User, IdCard, GraduationCap, CalendarDays } from "lucide-react";
+import { formatThaiDateTime, getBangkokNow } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface Props {
-  registration: Registration;
+  data: {
+    first_name: string;
+    last_name: string;
+    student_id: string;
+    grade: string;
+    nickname: string;
+    activity_name?: string;
+  };
 }
 
-export default function SuccessCard({ registration }: Props) {
+export default function SuccessCard({ data }: Props) {
+  const [mounted, setMounted] = useState(false);
+  const now = getBangkokNow();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
   return (
-    <div className="w-full max-w-md mx-auto animate-fade-in-up">
-      {/* Success Icon */}
-      <div className="flex flex-col items-center mb-8">
-        <div className="relative mb-5">
-          <div className="w-24 h-24 rounded-full bg-cyan-400/10 border-2 border-cyan-400/30 flex items-center justify-center animate-pulse-glow">
-            <svg
-              width="56"
-              height="56"
-              viewBox="0 0 56 56"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="28"
-                cy="28"
-                r="26"
-                stroke="#22d3ee"
-                strokeWidth="2"
-                fill="none"
-                className="animate-circle"
-              />
-              <polyline
-                points="16,28 24,36 40,20"
-                stroke="#22d3ee"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-                className="animate-checkmark"
-              />
-            </svg>
-          </div>
-        </div>
-        <h2 className="text-2xl font-bold text-white mb-2">ลงทะเบียนสำเร็จ!</h2>
-        <p className="text-slate-400 text-center text-sm leading-relaxed">
-          ระบบได้บันทึกข้อมูลการลงทะเบียนของคุณเรียบร้อยแล้ว
-        </p>
-      </div>
-
-      {/* Info Card */}
-      <div className="glass-card rounded-2xl p-5 space-y-3.5 mb-6">
-        <h3 className="text-xs font-semibold text-cyan-400/80 uppercase tracking-widest mb-4">
-          ข้อมูลการลงทะเบียน
-        </h3>
-
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
-            <User size={15} className="text-blue-400" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-500 leading-none mb-1">ชื่อ - นามสกุล</p>
-            <p className="text-white font-medium">
-              {registration.first_name} {registration.last_name}
-            </p>
-          </div>
+    <div className="glass-card rounded-3xl p-6 md:p-8 relative overflow-hidden animate-fade-in-up border border-cyan-500/30 shadow-[0_0_40px_rgba(34,211,238,0.15)] text-center">
+      <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 pointer-events-none" />
+      
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Animated Checkmark */}
+        <div className="w-20 h-20 bg-cyan-500/20 rounded-full flex items-center justify-center mb-6 animate-pulse-glow">
+          <svg className="w-10 h-10 text-cyan-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" className="animate-circle" strokeOpacity="0.2" />
+            <path d="M8 12l3 3 5-6" className="animate-checkmark" />
+          </svg>
         </div>
 
-        <div className="border-t border-white/5" />
-
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center shrink-0">
-            <Hash size={15} className="text-cyan-400" />
-          </div>
-          <div>
-            <p className="text-xs text-slate-500 leading-none mb-1">รหัสนักเรียน</p>
-            <p className="text-white font-mono font-medium">{registration.student_id}</p>
-          </div>
+        <h2 className="text-2xl font-bold text-white mb-2 text-glow-cyan">
+          ลงทะเบียนสำเร็จ!
+        </h2>
+        
+        <div className="bg-red-500/20 border border-red-500/50 rounded-lg px-4 py-2 mt-2 mb-6 animate-pulse">
+          <p className="text-red-400 font-bold text-sm">
+            🚨 กรุณาแคปหน้าจอนี้ไว้เป็นหลักฐาน 🚨
+          </p>
         </div>
 
-        <div className="border-t border-white/5" />
-
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-            <GraduationCap size={15} className="text-purple-400" />
+        {/* Data Card */}
+        <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 text-left space-y-3 mb-6">
+          <div className="flex items-center gap-3 text-slate-300 border-b border-white/5 pb-3">
+            <CalendarDays size={18} className="text-cyan-400" />
+            <div>
+              <p className="text-xs text-slate-500">กิจกรรมที่เข้าร่วม</p>
+              <p className="font-medium text-white">{data.activity_name || "ไม่ระบุ"}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs text-slate-500 leading-none mb-1">ระดับชั้น</p>
-            <p className="text-white font-medium">{registration.grade}</p>
-          </div>
-        </div>
-
-        <div className="border-t border-white/5" />
-
-        <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
-            <Calendar size={15} className="text-emerald-400" />
-          </div>
-          <div className="flex-1">
-            <p className="text-xs text-slate-500 leading-none mb-1">วันที่และเวลาลงทะเบียน</p>
-            <div className="flex items-center gap-3">
-              <p className="text-white font-medium">
-                {formatThaiDate(registration.registered_at)}
+          <div className="flex items-center gap-3 text-slate-300">
+            <User size={18} className="text-cyan-400" />
+            <div>
+              <p className="text-xs text-slate-500">ชื่อ-นามสกุล</p>
+              <p className="font-medium text-white">
+                {data.first_name} {data.last_name} ({data.nickname})
               </p>
-              <div className="flex items-center gap-1 text-slate-400">
-                <Clock size={12} />
-                <span className="text-sm">{formatThaiTime(registration.registered_at)}</span>
-              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 text-slate-300">
+            <IdCard size={18} className="text-cyan-400" />
+            <div>
+              <p className="text-xs text-slate-500">รหัสนักเรียน</p>
+              <p className="font-mono text-white">{data.student_id}</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 text-slate-300">
+            <GraduationCap size={18} className="text-cyan-400" />
+            <div>
+              <p className="text-xs text-slate-500">ระดับชั้น</p>
+              <p className="font-medium text-white">{data.grade}</p>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Back Button */}
-      <Link
-        href="/register"
-        className="flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-white/10 bg-white/5 text-slate-300 font-medium transition-all duration-200 hover:bg-white/10 hover:border-white/20 hover:text-white"
-      >
-        <Home size={18} />
-        <span>กลับหน้าหลัก</span>
-      </Link>
+        <p className="text-xs text-slate-500">
+          บันทึกข้อมูลเมื่อ {formatThaiDateTime(now)}
+        </p>
+      </div>
     </div>
   );
 }

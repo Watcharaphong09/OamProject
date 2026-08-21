@@ -7,7 +7,7 @@ import SuccessCard from "@/components/registration/SuccessCard";
 import { Registration } from "@/lib/db";
 
 export default function RegisterPage() {
-  const [registration, setRegistration] = useState<Registration | null>(null);
+  const [registration, setRegistration] = useState<any>(null);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start py-8 px-4 relative overflow-hidden">
@@ -37,10 +37,10 @@ export default function RegisterPage() {
                 <QrCode size={38} className="text-cyan-400" />
               </div>
               <h1 className="text-3xl font-bold text-white mb-2 gradient-text">
-                Student Registration
+                Activity Registration
               </h1>
               <p className="text-slate-400 text-sm leading-relaxed">
-                กรุณากรอกข้อมูลเพื่อยืนยันการลงทะเบียน
+                กรุณากรอกข้อมูลเพื่อลงทะเบียนเข้าร่วมกิจกรรม
               </p>
             </div>
 
@@ -67,9 +67,9 @@ export default function RegisterPage() {
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600/20 to-cyan-400/20 border border-cyan-400/20 mb-3">
                 <QrCode size={26} className="text-cyan-400" />
               </div>
-              <p className="text-slate-500 text-xs">Student Registration System</p>
+              <p className="text-slate-500 text-xs">Activity Registration System</p>
             </div>
-            <SuccessCard registration={registration} />
+            <SuccessCard data={registration} />
           </>
         )}
       </div>

@@ -13,11 +13,13 @@ import {
   Menu,
   X,
   ChevronRight,
+  CalendarDays,
 } from "lucide-react";
 
 const navItems = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { href: "/admin/dashboard#registrations", icon: Users, label: "Registrations" },
+  { href: "/admin/activities", icon: CalendarDays, label: "Activities" },
 ];
 
 interface Props {

@@ -7,30 +7,12 @@ import {
 import { getBangkokNow } from "@/lib/utils";
 
 const registrationSchema = z.object({
-  first_name: z
-    .string()
-    .min(1, "กรุณากรอกชื่อ")
-    .max(100, "ชื่อยาวเกินไป")
-    .trim(),
-  last_name: z
-    .string()
-    .min(1, "กรุณากรอกนามสกุล")
-    .max(100, "นามสกุลยาวเกินไป")
-    .trim(),
-  student_id: z
-    .string()
-    .min(1, "กรุณากรอกรหัสนักเรียน")
-    .regex(
-      /^[A-Za-z0-9]{4,15}$/,
-      "รหัสนักเรียนต้องเป็นตัวอักษรหรือตัวเลข 4-15 ตัวอักษร"
-    )
-    .trim(),
-  grade: z.string().min(1, "กรุณาเลือกระดับชั้น").trim(),
-  nickname: z
-    .string()
-    .min(1, "กรุณากรอกชื่อเล่น")
-    .max(50, "ชื่อเล่นยาวเกินไป")
-    .trim(),
+  first_name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
+  last_name: z.string().min(2, "นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
+  student_id: z.string().min(4, "รหัสนักเรียนไม่ถูกต้อง"),
+  grade: z.string().min(1, "กรุณาเลือกระดับชั้น"),
+  nickname: z.string().min(1, "กรุณากรอกชื่อเล่น"),
+  activity_id: z.number({ required_error: "กรุณาเลือกกิจกรรม" }),
 });
 
 export async function POST(req: NextRequest) {
@@ -39,16 +21,11 @@ export async function POST(req: NextRequest) {
     const parsed = registrationSchema.safeParse(body);
 
     if (!parsed.success) {
-      return NextResponse.json(
-        {
-          error: "ข้อมูลไม่ถูกต้อง",
-          details: parsed.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
+      const error = parsed.error.issues[0].message;
+      return NextResponse.json({ error }, { status: 400 });
     }
 
-    const { first_name, last_name, student_id, grade, nickname } = parsed.data;
+    const { first_name, last_name, student_id, grade, nickname, activity_id } = parsed.data;
 
     // Check duplicate
     const existing = await getRegistrationByStudentId(student_id);
@@ -66,6 +43,7 @@ export async function POST(req: NextRequest) {
       student_id,
       grade,
       nickname,
+      activity_id,
       registered_at,
     });
 

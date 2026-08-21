@@ -2,13 +2,21 @@
 
 import { Filter, ChevronDown } from "lucide-react";
 import { getDateRange } from "@/lib/utils";
+import { useEffect, useState } from "react";
+
+interface Activity {
+  id: number;
+  name: string;
+}
 
 interface Props {
   grades: string[];
   selectedGrade: string;
+  selectedActivity: string;
   dateFrom: string;
   dateTo: string;
   onGradeChange: (g: string) => void;
+  onActivityChange: (a: string) => void;
   onDateChange: (from: string, to: string) => void;
 }
 
@@ -23,11 +31,24 @@ const DATE_PRESETS = [
 export default function FilterPanel({
   grades,
   selectedGrade,
+  selectedActivity,
   dateFrom,
   dateTo,
   onGradeChange,
+  onActivityChange,
   onDateChange,
 }: Props) {
+  const [activities, setActivities] = useState<Activity[]>([]);
+
+  useEffect(() => {
+    fetch("/api/activities")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setActivities(data);
+      })
+      .catch(console.error);
+  }, []);
+
   const handlePreset = (preset: string) => {
     if (preset === "all") {
       onDateChange("", "");
@@ -45,6 +66,28 @@ export default function FilterPanel({
       <div className="flex items-center gap-1.5 text-slate-500 text-xs shrink-0">
         <Filter size={13} />
         <span>Filter:</span>
+      </div>
+
+      {/* Activity filter */}
+      <div className="relative">
+        <select
+          value={selectedActivity}
+          onChange={(e) => onActivityChange(e.target.value)}
+          className={selectClass}
+        >
+          <option value="" className="bg-slate-900">
+            ทุกกิจกรรม
+          </option>
+          {activities.map((a) => (
+            <option key={a.id} value={a.id} className="bg-slate-900">
+              {a.name}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          size={13}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+        />
       </div>
 
       {/* Grade filter */}

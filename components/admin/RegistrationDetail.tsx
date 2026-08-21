@@ -34,6 +34,13 @@ export default function RegistrationDetail({ registration, onClose }: Props) {
       mono: true,
     },
     {
+      icon: Calendar,
+      label: "กิจกรรม",
+      value: registration.activity_name || "-",
+      iconColor: "text-orange-400",
+      iconBg: "bg-orange-500/10 border-orange-500/20",
+    },
+    {
       icon: GraduationCap,
       label: "ระดับชั้น",
       value: registration.grade,

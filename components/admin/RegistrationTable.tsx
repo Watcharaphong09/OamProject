@@ -31,6 +31,7 @@ const columns = [
   { key: "last_name", label: "นามสกุล", sortable: true },
   { key: "student_id", label: "รหัสนักเรียน", sortable: true },
   { key: "grade", label: "ระดับชั้น", sortable: true },
+  { key: "activity", label: "กิจกรรม", sortable: true },
   { key: "nickname", label: "ชื่อเล่น", sortable: false },
   { key: "registered_at_date", label: "วันที่", sortable: false },
   { key: "registered_at_time", label: "เวลา", sortable: false },
@@ -127,6 +128,11 @@ export default function RegistrationTable({
                     <td className="px-4 py-3.5">
                       <span className="text-xs bg-blue-500/10 border border-blue-500/20 text-blue-300 px-2 py-1 rounded-lg">
                         {reg.grade}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3.5 text-slate-300 text-sm">
+                      <span className="text-xs bg-orange-500/10 border border-orange-500/20 text-orange-300 px-2 py-1 rounded-lg">
+                        {reg.activity_name || "-"}
                       </span>
                     </td>
                     <td className="px-4 py-3.5 text-slate-300 text-sm">{reg.nickname}</td>

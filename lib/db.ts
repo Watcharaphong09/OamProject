@@ -19,6 +19,16 @@ export async function initializeDatabase() {
   if (isInitialized) return;
   const p = getPool();
 
+  // Create activities table
+  await p.query(`
+    CREATE TABLE IF NOT EXISTS activities (
+      id SERIAL PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      is_active BOOLEAN DEFAULT true,
+      created_at VARCHAR(255) NOT NULL
+    )
+  `);
+
   // Create registrations table
   await p.query(`
     CREATE TABLE IF NOT EXISTS registrations (
@@ -32,6 +42,12 @@ export async function initializeDatabase() {
       created_at VARCHAR(255) NOT NULL,
       updated_at VARCHAR(255) NOT NULL
     )
+  `);
+
+  // Add activity_id to registrations if it doesn't exist
+  await p.query(`
+    ALTER TABLE registrations 
+    ADD COLUMN IF NOT EXISTS activity_id INTEGER REFERENCES activities(id)
   `);
 
   // Create admin_users table
@@ -71,6 +87,13 @@ async function query(text: string, params?: any[]) {
 }
 
 // --- Types ---
+export interface Activity {
+  id: number;
+  name: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface Registration {
   id: number;
   first_name: string;
@@ -78,6 +101,8 @@ export interface Registration {
   student_id: string;
   grade: string;
   nickname: string;
+  activity_id: number | null;
+  activity_name?: string;
   registered_at: string;
   created_at: string;
   updated_at: string;
@@ -96,12 +121,14 @@ export interface RegistrationInput {
   student_id: string;
   grade: string;
   nickname: string;
+  activity_id: number;
   registered_at: string;
 }
 
 export interface RegistrationFilters {
   search?: string;
   grade?: string;
+  activityId?: string;
   dateFrom?: string;
   dateTo?: string;
   sortBy?: string;
@@ -110,14 +137,33 @@ export interface RegistrationFilters {
   pageSize?: number;
 }
 
+// --- Activity Queries ---
+export async function getActivities(): Promise<Activity[]> {
+  const res = await query("SELECT * FROM activities ORDER BY created_at DESC");
+  return res.rows as Activity[];
+}
+
+export async function createActivity(name: string): Promise<Activity> {
+  const now = new Date().toISOString();
+  const res = await query(
+    "INSERT INTO activities (name, created_at) VALUES ($1, $2) RETURNING *",
+    [name, now]
+  );
+  return res.rows[0] as Activity;
+}
+
+export async function deleteActivity(id: number): Promise<void> {
+  await query("DELETE FROM activities WHERE id = $1", [id]);
+}
+
 // --- Registration Queries ---
 export async function createRegistration(
   input: RegistrationInput
 ): Promise<Registration> {
   const now = new Date().toISOString();
   const res = await query(
-    `INSERT INTO registrations (first_name, last_name, student_id, grade, nickname, registered_at, created_at, updated_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `INSERT INTO registrations (first_name, last_name, student_id, grade, nickname, activity_id, registered_at, created_at, updated_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
      RETURNING *`,
     [
       input.first_name,
@@ -125,6 +171,7 @@ export async function createRegistration(
       input.student_id,
       input.grade,
       input.nickname,
+      input.activity_id,
       input.registered_at,
       now,
       now,
@@ -136,15 +183,24 @@ export async function createRegistration(
 export async function getRegistrationById(
   id: number
 ): Promise<Registration | undefined> {
-  const res = await query("SELECT * FROM registrations WHERE id = $1", [id]);
+  const res = await query(`
+    SELECT r.*, a.name as activity_name 
+    FROM registrations r
+    LEFT JOIN activities a ON r.activity_id = a.id
+    WHERE r.id = $1
+  `, [id]);
   return res.rows[0] as Registration | undefined;
 }
 
 export async function getRegistrationByStudentId(
   studentId: string
 ): Promise<Registration | undefined> {
-  const res = await query(
-    "SELECT * FROM registrations WHERE student_id = $1",
+  const res = await query(`
+    SELECT r.*, a.name as activity_name 
+    FROM registrations r
+    LEFT JOIN activities a ON r.activity_id = a.id
+    WHERE r.student_id = $1
+  `,
     [studentId]
   );
   return res.rows[0] as Registration | undefined;
@@ -157,6 +213,7 @@ export async function getRegistrations(filters: RegistrationFilters = {}): Promi
   const {
     search = "",
     grade = "",
+    activityId = "",
     dateFrom = "",
     dateTo = "",
     sortBy = "registered_at",
@@ -166,13 +223,14 @@ export async function getRegistrations(filters: RegistrationFilters = {}): Promi
   } = filters;
 
   const allowedSortColumns: Record<string, string> = {
-    registered_at: "registered_at",
-    first_name: "first_name",
-    last_name: "last_name",
-    student_id: "student_id",
-    grade: "grade",
+    registered_at: "r.registered_at",
+    first_name: "r.first_name",
+    last_name: "r.last_name",
+    student_id: "r.student_id",
+    grade: "r.grade",
+    activity: "a.name"
   };
-  const safeSort = allowedSortColumns[sortBy] ?? "registered_at";
+  const safeSort = allowedSortColumns[sortBy] ?? "r.registered_at";
   const safeOrder = sortOrder === "asc" ? "ASC" : "DESC";
 
   const conditions: string[] = [];
@@ -181,23 +239,28 @@ export async function getRegistrations(filters: RegistrationFilters = {}): Promi
 
   if (search) {
     conditions.push(
-      `(first_name ILIKE $${paramIdx} OR last_name ILIKE $${paramIdx} OR student_id ILIKE $${paramIdx} OR nickname ILIKE $${paramIdx})`
+      `(r.first_name ILIKE $${paramIdx} OR r.last_name ILIKE $${paramIdx} OR r.student_id ILIKE $${paramIdx} OR r.nickname ILIKE $${paramIdx})`
     );
     params.push(`%${search}%`);
     paramIdx++;
   }
   if (grade) {
-    conditions.push(`grade = $${paramIdx}`);
+    conditions.push(`r.grade = $${paramIdx}`);
     params.push(grade);
     paramIdx++;
   }
+  if (activityId) {
+    conditions.push(`r.activity_id = $${paramIdx}`);
+    params.push(parseInt(activityId, 10));
+    paramIdx++;
+  }
   if (dateFrom) {
-    conditions.push(`LEFT(registered_at, 10) >= $${paramIdx}`);
+    conditions.push(`LEFT(r.registered_at, 10) >= $${paramIdx}`);
     params.push(dateFrom);
     paramIdx++;
   }
   if (dateTo) {
-    conditions.push(`LEFT(registered_at, 10) <= $${paramIdx}`);
+    conditions.push(`LEFT(r.registered_at, 10) <= $${paramIdx}`);
     params.push(dateTo);
     paramIdx++;
   }
@@ -206,14 +269,19 @@ export async function getRegistrations(filters: RegistrationFilters = {}): Promi
     conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const countRes = await query(
-    `SELECT COUNT(*) as cnt FROM registrations ${where}`,
+    `SELECT COUNT(*) as cnt FROM registrations r ${where}`,
     params
   );
   const total = parseInt(countRes.rows[0].cnt, 10);
 
   const offset = (page - 1) * pageSize;
   const dataRes = await query(
-    `SELECT * FROM registrations ${where} ORDER BY ${safeSort} ${safeOrder} LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
+    `SELECT r.*, a.name as activity_name 
+     FROM registrations r
+     LEFT JOIN activities a ON r.activity_id = a.id
+     ${where} 
+     ORDER BY ${safeSort} ${safeOrder} 
+     LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`,
     [...params, pageSize, offset]
   );
 
@@ -236,19 +304,28 @@ export async function getStats() {
   );
   const today = parseInt(todayRes.rows[0].cnt, 10);
 
+  // Activity stats instead of class count (or we can return both)
+  const activityRes = await query(
+    "SELECT COUNT(DISTINCT activity_id) as cnt FROM registrations WHERE activity_id IS NOT NULL"
+  );
+  const activityCount = parseInt(activityRes.rows[0].cnt, 10);
+
   const classRes = await query(
     "SELECT COUNT(DISTINCT grade) as cnt FROM registrations"
   );
   const classCount = parseInt(classRes.rows[0].cnt, 10);
 
   const latestRes = await query(
-    "SELECT first_name, last_name, registered_at FROM registrations ORDER BY registered_at DESC LIMIT 1"
+    `SELECT r.first_name, r.last_name, r.registered_at, a.name as activity_name 
+     FROM registrations r
+     LEFT JOIN activities a ON r.activity_id = a.id
+     ORDER BY r.registered_at DESC LIMIT 1`
   );
   const latest = latestRes.rows[0] as
-    | { first_name: string; last_name: string; registered_at: string }
+    | { first_name: string; last_name: string; registered_at: string; activity_name?: string }
     | undefined;
 
-  return { total, today, classCount, latest };
+  return { total, today, classCount, activityCount, latest };
 }
 
 export async function getChartData() {
@@ -262,6 +339,16 @@ export async function getChartData() {
   `);
   const daily = dailyRes.rows as { date: string; count: number }[];
 
+  // By activity
+  const byActivityRes = await query(`
+    SELECT a.name as activity_name, COUNT(r.id)::int as count
+    FROM registrations r
+    JOIN activities a ON r.activity_id = a.id
+    GROUP BY a.name
+    ORDER BY count DESC
+  `);
+  const byActivity = byActivityRes.rows as { activity_name: string; count: number }[];
+
   // By grade
   const byGradeRes = await query(`
     SELECT grade, COUNT(*)::int as count
@@ -271,7 +358,7 @@ export async function getChartData() {
   `);
   const byGrade = byGradeRes.rows as { grade: string; count: number }[];
 
-  return { daily, byGrade };
+  return { daily, byGrade, byActivity };
 }
 
 // --- Admin Queries ---
