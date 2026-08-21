@@ -83,10 +83,10 @@ export const GRADE_OPTIONS = [
 ];
 
 /**
- * Validate Student ID format (alphanumeric, exactly 7 chars)
+ * Validate Student ID format (alphanumeric, exactly 8 chars)
  */
 export function isValidStudentId(id: string): boolean {
-  return /^[A-Za-z0-9]{7}$/.test(id);
+  return /^[A-Za-z0-9]{8}$/.test(id);
 }
 
 /**

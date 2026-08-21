@@ -9,7 +9,7 @@ import { getBangkokNow } from "@/lib/utils";
 const registrationSchema = z.object({
   first_name: z.string().min(2, "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร"),
   last_name: z.string().min(2, "นามสกุลต้องมีอย่างน้อย 2 ตัวอักษร"),
-  student_id: z.string().length(7, "รหัสนักศึกษาต้องมี 7 หลักพอดี"),
+  student_id: z.string().length(8, "รหัสนักศึกษาต้องมี 8 หลักพอดี"),
   grade: z.string().min(1, "กรุณาเลือกระดับชั้น"),
   nickname: z.string().min(1, "กรุณากรอกชื่อเล่น"),
   activity_id: z.number({ required_error: "กรุณาเลือกกิจกรรม" }),
