@@ -147,7 +147,7 @@ export default function AdminDashboard() {
   };
 
   // QR Code URL
-  const baseUrl = "https://oam-project.vercel.app/";
+  const baseUrl = "https://smartqueueqrcode.vercel.app/";
 
   // Close sort dropdown on outside click
   useEffect(() => {
