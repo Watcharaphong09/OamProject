@@ -4,12 +4,18 @@ import { toZonedTime } from "date-fns-tz";
 const BANGKOK_TZ = "Asia/Bangkok";
 
 /**
- * Get current time in Bangkok timezone as ISO string
+ * Get current time in Bangkok timezone as ISO string with correct offset
  */
 export function getBangkokNow(): string {
   const now = new Date();
-  const bangkokTime = toZonedTime(now, BANGKOK_TZ);
-  return bangkokTime.toISOString();
+  // Bangkok is UTC+7
+  const bangkokOffset = 7 * 60 * 60 * 1000;
+  const localOffset = now.getTimezoneOffset() * 60 * 1000;
+  
+  // We want the string to look like "YYYY-MM-DDTHH:mm:ss+07:00"
+  // So we shift the UTC time to Bangkok time, get the ISO string, and replace Z
+  const bangkokTime = new Date(now.getTime() + bangkokOffset);
+  return bangkokTime.toISOString().replace("Z", "+07:00");
 }
 
 /**
@@ -17,9 +23,13 @@ export function getBangkokNow(): string {
  */
 export function formatThaiDate(dateStr: string): string {
   try {
-    const date = parseISO(dateStr);
-    const bangkokDate = toZonedTime(date, BANGKOK_TZ);
-    return format(bangkokDate, "dd/MM/yyyy");
+    const date = new Date(dateStr);
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: BANGKOK_TZ,
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric"
+    }).format(date);
   } catch {
     return dateStr;
   }
@@ -30,9 +40,14 @@ export function formatThaiDate(dateStr: string): string {
  */
 export function formatThaiTime(dateStr: string): string {
   try {
-    const date = parseISO(dateStr);
-    const bangkokDate = toZonedTime(date, BANGKOK_TZ);
-    return format(bangkokDate, "HH:mm:ss");
+    const date = new Date(dateStr);
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: BANGKOK_TZ,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false
+    }).format(date);
   } catch {
     return "";
   }
@@ -43,9 +58,7 @@ export function formatThaiTime(dateStr: string): string {
  */
 export function formatThaiDateTime(dateStr: string): string {
   try {
-    const date = parseISO(dateStr);
-    const bangkokDate = toZonedTime(date, BANGKOK_TZ);
-    return format(bangkokDate, "dd/MM/yyyy HH:mm:ss");
+    return `${formatThaiDate(dateStr)} ${formatThaiTime(dateStr)}`;
   } catch {
     return dateStr;
   }
@@ -93,28 +106,34 @@ export function isValidStudentId(id: string): boolean {
  * Get date range for filter presets
  */
 export function getDateRange(preset: string): { from: string; to: string } {
+  const bangkokOffset = 7 * 60 * 60 * 1000;
   const now = new Date();
-  const bangkokNow = toZonedTime(now, BANGKOK_TZ);
-  const today = format(bangkokNow, "yyyy-MM-dd");
+  const getBangkokDateStr = (date: Date) => {
+    // shift to BKK time and get ISO string date part
+    const bkkDate = new Date(date.getTime() + bangkokOffset);
+    return bkkDate.toISOString().slice(0, 10);
+  };
+  
+  const today = getBangkokDateStr(now);
 
   switch (preset) {
     case "today":
       return { from: today, to: today };
     case "yesterday": {
-      const yesterday = new Date(bangkokNow);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const y = format(yesterday, "yyyy-MM-dd");
+      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const y = getBangkokDateStr(yesterday);
       return { from: y, to: y };
     }
     case "7days": {
-      const d = new Date(bangkokNow);
-      d.setDate(d.getDate() - 6);
-      return { from: format(d, "yyyy-MM-dd"), to: today };
+      const d = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+      return { from: getBangkokDateStr(d), to: today };
     }
     case "month": {
-      const d = new Date(bangkokNow);
-      d.setDate(1);
-      return { from: format(d, "yyyy-MM-dd"), to: today };
+      // For month, we need the first day of current BKK month
+      const bkkNow = new Date(now.getTime() + bangkokOffset);
+      const year = bkkNow.getUTCFullYear();
+      const month = String(bkkNow.getUTCMonth() + 1).padStart(2, "0");
+      return { from: `${year}-${month}-01`, to: today };
     }
     default:
       return { from: "", to: "" };
