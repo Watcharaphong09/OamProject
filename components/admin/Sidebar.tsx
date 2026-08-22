@@ -18,7 +18,7 @@ import {
 
 const navItems = [
   { href: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/admin/dashboard#registrations", icon: Users, label: "Registrations" },
+  { href: "/admin/registrations", icon: Users, label: "Registrations" },
   { href: "/admin/activities", icon: CalendarDays, label: "Activities" },
 ];
 
